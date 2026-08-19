@@ -54,9 +54,10 @@ export default function SettingsModal({ settings, onSave, onClose }) {
                 <Cpu size={16} /> AI Model Selection
               </label>
               <select className="form-select" value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast & Intelligent)</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fast & Intelligent)</option>
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro (Complex Reasoning)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Lightweight)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
               </select>
             </div>
 

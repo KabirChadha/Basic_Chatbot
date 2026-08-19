@@ -21,16 +21,19 @@ function formatHistory(messages, systemInstruction) {
     }
   });
 
-  return {
-    contents,
-    system_instruction: systemInstruction ? {
-      parts: [{ text: systemInstruction }]
-    } : undefined
-  };
+  const payload = { contents };
+
+  if (systemInstruction && systemInstruction.trim()) {
+    payload.systemInstruction = {
+      parts: [{ text: systemInstruction.trim() }]
+    };
+  }
+
+  return payload;
 }
 
 /**
- * Stream response from Gemini API.
+ * Stream response from Gemini API with fallback retry for supported models.
  */
 export async function streamGeminiChat({
   apiKey,
@@ -48,75 +51,98 @@ export async function streamGeminiChat({
     return simulateDemoStream(messages, onChunk, onFinish, signal);
   }
 
-  try {
-    const payload = {
-      ...formatHistory(messages, systemInstruction),
-      generationConfig: {
-        temperature: parseFloat(temperature) || 0.7,
-        maxOutputTokens: 2048
+  const cleanKey = apiKey.trim();
+  const candidateModels = [model, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  // Remove duplicates while keeping requested model first
+  const modelsToTry = [...new Set(candidateModels)];
+
+  let lastError = null;
+
+  for (const currentModel of modelsToTry) {
+    try {
+      const payload = {
+        ...formatHistory(messages, systemInstruction),
+        generationConfig: {
+          temperature: parseFloat(temperature) || 0.7,
+          maxOutputTokens: 2048
+        }
+      };
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:streamGenerateContent?alt=sse&key=${cleanKey}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        signal
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        const errorMsg = errJson.error?.message || `API error: ${response.status} ${response.statusText}`;
+
+        // If model not found, attempt next fallback model
+        if (response.status === 404 || errorMsg.includes('not found') || errorMsg.includes('not supported')) {
+          console.warn(`Model ${currentModel} failed (${errorMsg}), trying fallback...`);
+          lastError = new Error(errorMsg);
+          continue;
+        }
+
+        throw new Error(errorMsg);
       }
-    };
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey.trim()}`;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      let buffer = '';
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload),
-      signal
-    });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      const errorMsg = errJson.error?.message || `API error: ${response.status} ${response.statusText}`;
-      throw new Error(errorMsg);
-    }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep remainder in buffer
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let fullText = '';
-    let buffer = '';
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.replace('data: ', '').trim();
+            if (!jsonStr || jsonStr === '[DONE]') continue;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep remainder in buffer
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.replace('data: ', '').trim();
-          if (!jsonStr || jsonStr === '[DONE]') continue;
-
-          try {
-            const data = JSON.parse(jsonStr);
-            const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (textChunk) {
-              fullText += textChunk;
-              if (onChunk) onChunk(textChunk, fullText);
+            try {
+              const data = JSON.parse(jsonStr);
+              const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (textChunk) {
+                fullText += textChunk;
+                if (onChunk) onChunk(textChunk, fullText);
+              }
+            } catch (e) {
+              // Ignore parse errors on partial lines
             }
-          } catch (e) {
-            // Ignore parse errors on partial lines
           }
         }
       }
-    }
 
-    if (onFinish) onFinish(fullText);
-    return fullText;
+      if (onFinish) onFinish(fullText);
+      return fullText;
 
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('Stream generation aborted by user.');
-      return;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Stream generation aborted by user.');
+        return;
+      }
+      lastError = error;
+      // If it's a network/abort error or explicit non-404 error, break loop
+      if (error.name !== 'Error' || (!error.message.includes('not found') && !error.message.includes('not supported'))) {
+        break;
+      }
     }
-    console.error('Gemini API Error:', error);
-    if (onError) onError(error.message || 'Failed to connect to Gemini API.');
   }
+
+  console.error('Gemini API Error:', lastError);
+  if (onError) onError(lastError?.message || 'Failed to connect to Gemini API.');
 }
 
 /**
