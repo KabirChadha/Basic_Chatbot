@@ -359,5 +359,5 @@ As a **100% Local AI Model** running in your browser:
 ### How would you like to proceed?
 - Need help **writing or refactoring code**?
 - Want me to **summarize or format text**?
-- Looking to connect to a local **Ollama** model (`llama3`, `mistral`, `gemma`) on your GPU? (Check Settings ⚙️ to switch providers!)`;
+- Looking to connect to a local **Ollama** model (\`llama3\`, \`mistral\`, \`gemma\`) on your GPU? (Check Settings ⚙️ to switch providers!)`;
 }
