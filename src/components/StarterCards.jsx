@@ -1,11 +1,11 @@
 import React from 'react';
-import { Code, Lightbulb, PenTool, Compass } from 'lucide-react';
+import { Code, Lightbulb, PenTool, Compass, ShieldCheck } from 'lucide-react';
 
 const STARTER_PROMPTS = [
   {
     icon: <Code size={20} />,
     title: "Code & Debugging",
-    desc: "Write a React hook for fetching data with loading & error states",
+    desc: "Write a custom React hook for data fetching with loading & error states",
     prompt: "Write a custom React hook `useFetch(url)` with state management for data, loading, and error handling. Include usage examples."
   },
   {
@@ -31,10 +31,12 @@ const STARTER_PROMPTS = [
 export default function StarterCards({ onSelectPrompt }) {
   return (
     <div className="welcome-container">
-      <div className="welcome-badge">⚡ Powered by Gemini API</div>
+      <div className="welcome-badge" style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.1)' }}>
+        🔒 100% Local & Offline Mode (Zero API Keys Needed)
+      </div>
       <h1 className="welcome-title">How can NexusAI assist you today?</h1>
       <p className="welcome-subtitle">
-        Your intelligent AI companion for coding, creative writing, complex problem-solving, and instant answers.
+        Your private, local AI companion for coding, creative writing, complex problem-solving, and instant answers.
       </p>
 
       <div className="starter-grid">

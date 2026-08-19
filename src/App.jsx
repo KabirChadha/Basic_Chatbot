@@ -4,17 +4,18 @@ import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import StarterCards from './components/StarterCards';
 import SettingsModal from './components/SettingsModal';
-import { streamGeminiChat } from './services/gemini';
-import { Menu, Sparkles, Sliders } from 'lucide-react';
+import { streamLocalChat } from './services/localAI';
+import { Menu, Sparkles, Sliders, ShieldCheck } from 'lucide-react';
 
-const STORAGE_KEY_SESSIONS = 'nexus_ai_sessions_v1';
-const STORAGE_KEY_SETTINGS = 'nexus_ai_settings_v1';
+const STORAGE_KEY_SESSIONS = 'nexus_ai_sessions_local_v1';
+const STORAGE_KEY_SETTINGS = 'nexus_ai_settings_local_v1';
 
 const DEFAULT_SETTINGS = {
-  apiKey: '',
-  model: 'gemini-1.5-flash',
+  provider: 'browser-local',
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'llama3',
   temperature: 0.7,
-  systemInstruction: 'You are NexusAI, a helpful, intelligent, and friendly AI assistant. Answer questions accurately, clearly, and concisely.'
+  systemInstruction: 'You are NexusAI, a helpful, intelligent, and friendly AI assistant running 100% locally.'
 };
 
 export default function App() {
@@ -98,7 +99,6 @@ export default function App() {
 
     const userMessage = { id: Date.now().toString(), role: 'user', content: text, timestamp: new Date().toISOString() };
     
-    // Auto-generate title for first message in session
     let updatedTitle = activeSession.title;
     if (messages.length === 0 || activeSession.title === 'New Chat') {
       updatedTitle = text.slice(0, 24) + (text.length > 24 ? '...' : '');
@@ -130,9 +130,10 @@ export default function App() {
     setIsGenerating(true);
     abortControllerRef.current = new AbortController();
 
-    await streamGeminiChat({
-      apiKey: settings.apiKey,
-      model: settings.model,
+    await streamLocalChat({
+      provider: settings.provider,
+      ollamaUrl: settings.ollamaUrl,
+      ollamaModel: settings.ollamaModel,
       messages: updatedMessages,
       systemInstruction: settings.systemInstruction,
       temperature: settings.temperature,
@@ -217,9 +218,9 @@ export default function App() {
               <Menu size={20} />
             </button>
             <h2 style={{ fontSize: '1rem', fontWeight: 600 }}>{activeSession?.title || 'Chat'}</h2>
-            <div className="model-badge">
-              <Sparkles size={12} />
-              {settings.apiKey ? settings.model : 'Demo Mode'}
+            <div className="model-badge" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981' }}>
+              <ShieldCheck size={14} />
+              {settings.provider === 'ollama' ? `Ollama (${settings.ollamaModel})` : 'Local Engine (No API)'}
             </div>
           </div>
 
@@ -257,7 +258,7 @@ export default function App() {
           settings={settings}
           onSave={(newSettings) => {
             setSettings(newSettings);
-            showToast('Settings saved successfully!');
+            showToast('Local Settings saved!');
           }}
           onClose={() => setIsSettingsOpen(false)}
         />
