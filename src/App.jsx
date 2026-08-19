@@ -12,7 +12,7 @@ const STORAGE_KEY_SETTINGS = 'nexus_ai_settings_v1';
 
 const DEFAULT_SETTINGS = {
   apiKey: '',
-  model: 'gemini-2.0-flash',
+  model: 'gemini-1.5-flash',
   temperature: 0.7,
   systemInstruction: 'You are NexusAI, a helpful, intelligent, and friendly AI assistant. Answer questions accurately, clearly, and concisely.'
 };

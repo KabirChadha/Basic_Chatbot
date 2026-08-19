@@ -3,7 +3,7 @@ import { X, Key, Sliders, Cpu, FileText, Check } from 'lucide-react';
 
 export default function SettingsModal({ settings, onSave, onClose }) {
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
-  const [model, setModel] = useState(settings.model || 'gemini-2.5-flash');
+  const [model, setModel] = useState(settings.model || 'gemini-1.5-flash');
   const [temperature, setTemperature] = useState(settings.temperature ?? 0.7);
   const [systemInstruction, setSystemInstruction] = useState(settings.systemInstruction || '');
 
@@ -45,7 +45,7 @@ export default function SettingsModal({ settings, onSave, onClose }) {
                 onChange={(e) => setApiKey(e.target.value)}
               />
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Leave empty to use <strong>Demo Mode</strong>. Your key is stored securely only in your browser's local storage.
+                Leave empty to use <strong>Demo Mode</strong>. Get a key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-purple)' }}>Google AI Studio</a>.
               </span>
             </div>
 
@@ -54,10 +54,10 @@ export default function SettingsModal({ settings, onSave, onClose }) {
                 <Cpu size={16} /> AI Model Selection
               </label>
               <select className="form-select" value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fast & Intelligent)</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Complex Reasoning)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recommended - Fast & Versatile)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Complex Reasoning)</option>
+                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                <option value="gemini-pro">Gemini 1.0 Pro</option>
               </select>
             </div>
 
