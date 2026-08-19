@@ -12,7 +12,7 @@ const STORAGE_KEY_SETTINGS = 'nexus_ai_settings_v1';
 
 const DEFAULT_SETTINGS = {
   apiKey: '',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-2.0-flash',
   temperature: 0.7,
   systemInstruction: 'You are NexusAI, a helpful, intelligent, and friendly AI assistant. Answer questions accurately, clearly, and concisely.'
 };
@@ -158,7 +158,7 @@ export default function App() {
           prev.map(s => {
             if (s.id !== activeSessionId) return s;
             const msgs = s.messages.map(m =>
-              m.id === assistantMsgId ? { ...m, content: `⚠️ **Error**: ${errMsg}` } : m
+              m.id === assistantMsgId ? { ...m, content: `⚠️ ${errMsg}` } : m
             );
             return { ...s, messages: msgs };
           })
